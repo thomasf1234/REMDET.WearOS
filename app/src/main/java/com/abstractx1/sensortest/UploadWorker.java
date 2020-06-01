@@ -4,9 +4,7 @@ import android.content.Context;
 import android.database.Cursor;
 import android.database.DatabaseUtils;
 import android.database.sqlite.SQLiteDatabase;
-import android.text.TextUtils;
 import android.util.Log;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.work.Worker;
@@ -17,41 +15,29 @@ import com.abstractx1.sensortest.entities.Event;
 import org.json.JSONException;
 
 import java.io.IOException;
-import java.util.Collections;
-import java.util.Date;
 
 public class UploadWorker extends Worker {
-
+    private String _serverUrl;
     public UploadWorker(
             @NonNull Context context,
             @NonNull WorkerParameters params) {
         super(context, params);
+        this._serverUrl = context.getString(R.string.server_url);
     }
 
     @Override
     public Result doWork() {
-        ServerClient serverClient = new ServerClient(Constants.SERVER_BASE_URL);
+        ServerClient serverClient = new ServerClient(this._serverUrl);
 
         try {
-            HttpResponse readyHttpResponse = serverClient.ready();
+            DbHelper dbHelper = new DbHelper(getApplicationContext());
+            SQLiteDatabase db = dbHelper.getWritableDatabase();
 
-            if (readyHttpResponse.getCode() == 200) {
-
-                Log.d(Constants.TAG, String.format("Server healthcheck returned %d", readyHttpResponse.getCode()));
-
-                DbHelper dbHelper = new DbHelper(getApplicationContext());
-                SQLiteDatabase db = dbHelper.getWritableDatabase();
-
-                while (DatabaseUtils.queryNumEntries(db, DbContract.EventEntry.TABLE_NAME) > 0) {
-                    performBatch(db, serverClient, 300);
-                }
-            } else {
-                // TODO : Throw error
-                return Result.retry();
+            while (DatabaseUtils.queryNumEntries(db, DbContract.EventEntry.TABLE_NAME) > 0) {
+                performBatch(db, serverClient, Constants.UPLOAD_BATCH_SIZE);
             }
-
         } catch (IOException e) {
-            e.printStackTrace();
+            return Result.retry();
         } catch (JSONException e) {
             return Result.failure();
         }
@@ -75,7 +61,6 @@ public class UploadWorker extends Worker {
                 double value = cursor.getDouble(2);
                 String recordedAt = cursor.getString(3);
 
-//                Log.d(Constants.TAG, String.format("Returned event (EventId, SampleId, Metric, Value, RecordedAt) (%d, %d, %s, %f, %s)", eventId, Constants.SAMPLE_ID, metric, value, recordedAt));
                 Event event = new Event(eventId, measurement, value, recordedAt);
                 events[i] = event;
                 i++;
@@ -87,7 +72,7 @@ public class UploadWorker extends Worker {
             }
 
             HttpResponse sendBatchUpdateHttpResponse = serverClient.sendBatchUpdate(events);
-            if (sendBatchUpdateHttpResponse.getCode() == 200) {
+            if (sendBatchUpdateHttpResponse.getCode() == 202) {
                 Log.d(Constants.TAG, "Batch update was successful");
                 Log.d(Constants.TAG, "Deleting events");
                 String[] eventIds = new String[events.length]; //Array of Ids you wish to delete.

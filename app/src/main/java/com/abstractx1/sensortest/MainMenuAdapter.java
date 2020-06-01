@@ -16,9 +16,6 @@ import java.util.ArrayList;
 public class MainMenuAdapter extends RecyclerView.Adapter<MainMenuAdapter.RecyclerViewHolder> {
 
     private ArrayList<MenuItem> dataSource = new ArrayList<MenuItem>();
-//    public interface AdapterCallback{
-//        void onItemClicked(Integer menuPosition);
-//    }
     private AdapterCallback callback;
 
     private String drawableIcon;

@@ -18,8 +18,6 @@ import androidx.work.WorkManager;
 
 import java.util.ArrayList;
 
-//https://stackoverflow.com/questions/2938502/sending-post-data-in-android
-
 public class MainActivity extends WearableActivity implements AdapterCallback {
 
     @Override

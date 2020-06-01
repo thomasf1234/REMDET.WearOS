@@ -28,7 +28,7 @@ $ adb shell dumpsys display
 Is screen off
 $ adb shell dumpsys deviceidle get screen
 
-To return must reset the battery, disable devicidle and reboot the device
+To return must reset the battery, disable deviceidle and reboot the device
 $ adb shell dumpsys battery reset
 $ adb shell dumpsys deviceidle disable
 $ adb reboot
@@ -47,16 +47,14 @@ public class AlarmUtil {
         PendingIntent pendingIntent = PendingIntent.getBroadcast(context, reminderiId, intent, PendingIntent.FLAG_UPDATE_CURRENT);
         if (Build.VERSION.SDK_INT >= 23)
         {
-//            https://medium.com/@sauge16/how-to-handle-alarm-in-all-android-version-e7aca16ae885
-//            Alarm time in SystemClock.elapsedRealtime() (time since boot, including sleep), which will wake up the device when it goes off.
+            // https://medium.com/@sauge16/how-to-handle-alarm-in-all-android-version-e7aca16ae885
+            // Alarm time in SystemClock.elapsedRealtime() (time since boot, including sleep), which will wake up the device when it goes off.
             long uptimeMs = SystemClock.elapsedRealtime();
-            long alarmIntervalMs = 10 * 60000;
-
-            long triggerAtMillis = uptimeMs + alarmIntervalMs;
+            long triggerAtMillis = uptimeMs + Constants.ALARM_INTERVAL_MS;
 
             if (Constants.IN_DEBUG) {
                 long nowMs = System.currentTimeMillis();
-                String triggerAtDateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(nowMs + alarmIntervalMs);
+                String triggerAtDateString = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ").format(nowMs + Constants.ALARM_INTERVAL_MS);
                 Log.d(Constants.TAG, String.format("Setting alarm at %s", triggerAtDateString));
             }
 
